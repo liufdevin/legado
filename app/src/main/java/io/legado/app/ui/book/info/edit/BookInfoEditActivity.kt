@@ -4,6 +4,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import androidx.activity.viewModels
 import androidx.core.view.WindowInsetsCompat
 import io.legado.app.R
@@ -11,6 +12,7 @@ import io.legado.app.base.VMBaseActivity
 import io.legado.app.constant.BookType
 import io.legado.app.data.entities.Book
 import io.legado.app.databinding.ActivityBookInfoEditBinding
+import io.legado.app.help.AssetsImageHelp
 import io.legado.app.help.book.BookHelp
 import io.legado.app.help.book.addType
 import io.legado.app.help.book.isAudio
@@ -19,6 +21,7 @@ import io.legado.app.help.book.isLocal
 import io.legado.app.help.book.isVideo
 import io.legado.app.help.book.removeType
 import io.legado.app.ui.book.changecover.ChangeCoverDialog
+import io.legado.app.ui.config.showAssetImageSelector
 import io.legado.app.ui.file.HandleFileContract
 import io.legado.app.utils.FileUtils
 import io.legado.app.utils.MD5Utils
@@ -79,6 +82,11 @@ class BookInfoEditActivity :
     }
 
     private fun initEvent() = binding.run {
+        tvSelectBuiltInCover.visibility = if (AssetsImageHelp.hasImages(AssetsImageHelp.COVER_BG)) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
         tvChangeCover.setOnClickListener {
             viewModel.bookData.value?.let {
                 showDialogFragment(
@@ -89,6 +97,19 @@ class BookInfoEditActivity :
         tvSelectCover.setOnClickListener {
             selectCover.launch {
                 mode = HandleFileContract.IMAGE
+            }
+        }
+        tvSelectBuiltInCover.setOnClickListener {
+            showAssetImageSelector(
+                AssetsImageHelp.COVER_BG,
+                getString(R.string.select_builtin_cover)
+            ) { assetName ->
+                val file = AssetsImageHelp.copyToExternal(
+                    AssetsImageHelp.COVER_BG,
+                    assetName,
+                    "covers"
+                )
+                coverChangeTo(file.absolutePath)
             }
         }
         tvRefreshCover.setOnClickListener {

@@ -20,23 +20,31 @@ fun PreferenceFragment.showAssetImageSelector(
     title: String,
     onSelected: (assetName: String) -> Unit
 ) {
+    requireContext().showAssetImageSelector(assetDir, title, onSelected)
+}
+
+fun Context.showAssetImageSelector(
+    assetDir: String,
+    title: String,
+    onSelected: (assetName: String) -> Unit
+) {
     val images = AssetsImageHelp.list(assetDir)
     if (images.isEmpty()) {
         return
     }
     lateinit var dialog: AlertDialog
-    val recyclerView = RecyclerView(requireContext()).apply {
-        layoutManager = GridLayoutManager(requireContext(), 3)
+    val recyclerView = RecyclerView(this).apply {
+        layoutManager = GridLayoutManager(this@showAssetImageSelector, 3)
         setPadding(12.dpToPx(), 8.dpToPx(), 12.dpToPx(), 8.dpToPx())
         clipToPadding = false
-        adapter = AssetImageAdapter(requireContext(), assetDir) { assetName ->
+        adapter = AssetImageAdapter(this@showAssetImageSelector, assetDir) { assetName ->
             onSelected(assetName)
             dialog.dismiss()
         }.apply {
             setItems(images)
         }
     }
-    val contentView = FrameLayout(requireContext()).apply {
+    val contentView = FrameLayout(this).apply {
         addView(
             recyclerView,
             FrameLayout.LayoutParams(
@@ -45,7 +53,7 @@ fun PreferenceFragment.showAssetImageSelector(
             )
         )
     }
-    dialog = requireContext().alert(title = title) {
+    dialog = alert(title = title) {
         customView { contentView }
         cancelButton()
     }
@@ -76,7 +84,7 @@ private class AssetImageAdapter(
         binding.run {
             ImageLoader.load(
                 context,
-                context.assets.open("$assetDir/$item").readBytes()
+                context.assets.open("$assetDir/$item").use { it.readBytes() }
             )
                 .centerCrop()
                 .into(ivBg)

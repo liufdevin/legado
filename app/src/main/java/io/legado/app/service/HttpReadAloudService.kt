@@ -37,6 +37,7 @@ import io.legado.app.help.http.okHttpClient
 import io.legado.app.model.ReadAloud
 import io.legado.app.model.ReadBook
 import io.legado.app.model.analyzeRule.AnalyzeUrl
+import io.legado.app.service.tts.OnlineTtsClients
 import io.legado.app.ui.book.read.page.entities.TextChapter
 import io.legado.app.utils.FileUtils
 import io.legado.app.utils.MD5Utils
@@ -325,6 +326,14 @@ class HttpReadAloudService : BaseReadAloudService(),
         httpTts: HttpTTS,
         speakText: String
     ): InputStream? {
+        OnlineTtsClients.find(httpTts)?.let { client ->
+            return client.getAudioStream(
+                httpTts = httpTts,
+                speakText = speakText,
+                speakSpeed = speechRate,
+                coroutineContext = currentCoroutineContext()
+            )
+        }
         while (true) {
             try {
                 val analyzeUrl = AnalyzeUrl(

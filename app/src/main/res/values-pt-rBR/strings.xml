@@ -301,6 +301,13 @@
     <string name="padding_right">Espaço da direita</string>
     <string name="check_book_source">Verificar fontes do livro</string>
     <string name="check_select_source">Verificar a fonte selecionada</string>
+    <string name="rss_source_checking">Verificando fontes selecionadas…</string>
+    <string name="rss_source_check_result">%1$d fonte(s) verificadas: %2$d disponíveis, %3$d indisponíveis.</string>
+    <string name="rss_source_invalid_list">Fontes indisponíveis:</string>
+    <string name="delete_invalid_rss_source">Excluir fontes indisponíveis</string>
+    <string name="invalid_url">URL inválida</string>
+    <string name="please_select_source">Selecione fontes primeiro</string>
+    <string name="more_items_omitted">…e mais %1$d</string>
     <string name="progress_show">%1$s      Progresso %2$d/%3$d</string>
     <string name="tts_fix">Favor instalar e selecionar o TTS chinês!</string>
     <string name="tts_init_failed">A inicialização do TTS falhou!</string>
@@ -620,6 +627,7 @@
     <string name="refresh_cover">Atualizar capa</string>
     <string name="change_cover_source">Alterar a fonte</string>
     <string name="select_local_image">Imagem local</string>
+    <string name="select_builtin_cover">Capa integrada</string>
     <string name="book_type">Tipo:</string>
     <string name="to_backstage">Segundo plano</string>
     <string name="importing">Importando</string>

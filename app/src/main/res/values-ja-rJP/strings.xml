@@ -301,6 +301,13 @@
     <string name="padding_right">Padding right</string>
     <string name="check_book_source">Check book sources</string>
     <string name="check_select_source">Check the selected source</string>
+    <string name="rss_source_checking">Checking selected sources…</string>
+    <string name="rss_source_check_result">Checked %1$d source(s): %2$d available, %3$d unavailable.</string>
+    <string name="rss_source_invalid_list">Unavailable sources:</string>
+    <string name="delete_invalid_rss_source">Delete unavailable sources</string>
+    <string name="invalid_url">Invalid URL</string>
+    <string name="please_select_source">Please select sources first</string>
+    <string name="more_items_omitted">…and %1$d more</string>
     <string name="progress_show">%1$s      Progress %2$d/%3$d</string>
     <string name="tts_fix">Please install and select Chinese TTS!</string>
     <string name="tts_init_failed">TTS initialization failed!</string>
@@ -622,6 +629,7 @@
     <string name="refresh_cover">Refresh cover</string>
     <string name="change_cover_source">Change origin</string>
     <string name="select_local_image">Local image</string>
+    <string name="select_builtin_cover">Built-in cover</string>
     <string name="book_type">Type:</string>
     <string name="to_backstage">Background</string>
     <string name="importing">Importing</string>

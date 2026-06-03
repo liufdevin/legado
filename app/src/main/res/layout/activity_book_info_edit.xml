@@ -106,39 +106,46 @@
                     android:layout_height="wrap_content" />
             </io.legado.app.ui.widget.text.TextInputLayout>
 
-            <LinearLayout
+            <com.google.android.flexbox.FlexboxLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
                 android:paddingStart="5dp"
-                android:paddingEnd="5dp">
+                android:paddingEnd="5dp"
+                app:alignItems="center"
+                app:flexWrap="wrap">
 
                 <io.legado.app.ui.widget.text.StrokeTextView
                     android:id="@+id/tv_select_cover"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
                     android:padding="5dp"
                     android:text="@string/select_local_image" />
+
+                <io.legado.app.ui.widget.text.StrokeTextView
+                    android:id="@+id/tv_select_built_in_cover"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:padding="5dp"
+                    android:text="@string/select_builtin_cover" />
 
                 <io.legado.app.ui.widget.text.StrokeTextView
                     android:id="@+id/tv_change_cover"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="10dp"
+                    android:layout_marginEnd="10dp"
                     android:padding="5dp"
-                    android:text="@string/change_cover_source"
-                    tools:ignore="RtlHardcoded" />
+                    android:text="@string/change_cover_source" />
 
                 <io.legado.app.ui.widget.text.StrokeTextView
                     android:id="@+id/tv_refresh_cover"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="10dp"
                     android:padding="5dp"
-                    android:text="@string/refresh_cover"
-                    tools:ignore="RtlHardcoded" />
+                    android:text="@string/refresh_cover" />
 
-            </LinearLayout>
+            </com.google.android.flexbox.FlexboxLayout>
 
             <io.legado.app.ui.widget.text.TextInputLayout
                 android:id="@+id/til_book_jj"

@@ -18,6 +18,7 @@ import io.legado.app.data.entities.RssSource
 import io.legado.app.databinding.ActivityRssSourceBinding
 import io.legado.app.databinding.DialogEditTextBinding
 import io.legado.app.help.DirectLinkUpload
+import io.legado.app.help.coroutine.Coroutine
 import io.legado.app.lib.dialogs.alert
 import io.legado.app.lib.theme.primaryColor
 import io.legado.app.lib.theme.primaryTextColor
@@ -26,6 +27,7 @@ import io.legado.app.ui.file.HandleFileContract
 import io.legado.app.ui.qrcode.QrCodeResult
 import io.legado.app.ui.rss.source.edit.RssSourceEditActivity
 import io.legado.app.ui.widget.SelectActionBar
+import io.legado.app.ui.widget.dialog.WaitDialog
 import io.legado.app.ui.widget.recycler.DragSelectTouchHelper
 import io.legado.app.ui.widget.recycler.ItemTouchCallback
 import io.legado.app.ui.widget.recycler.VerticalDivider
@@ -42,6 +44,7 @@ import io.legado.app.utils.showHelp
 import io.legado.app.utils.splitNotBlank
 import io.legado.app.utils.startActivity
 import io.legado.app.utils.transaction
+import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Job
@@ -67,8 +70,10 @@ class RssSourceActivity : VMBaseActivity<ActivityRssSourceBinding, RssSourceView
         binding.titleBar.findViewById(R.id.search_view)
     }
     private var sourceFlowJob: Job? = null
+    private var checkSourceJob: Coroutine<List<RssSourceCheckResult>>? = null
     private var groups = arrayListOf<String>()
     private var groupMenu: SubMenu? = null
+    private val waitDialog by lazy { WaitDialog(this) }
     private val qrCodeResult = registerForActivityResult(QrCodeResult()) {
         it ?: return@registerForActivityResult
         showDialogFragment(ImportRssSourceDialog(it))
@@ -172,6 +177,7 @@ class RssSourceActivity : VMBaseActivity<ActivityRssSourceBinding, RssSourceView
                 share(file)
             }
 
+            R.id.menu_check_source -> checkSelectedSource()
             R.id.menu_check_selected_interval -> adapter.checkSelectedInterval()
         }
         return true
@@ -291,6 +297,72 @@ class RssSourceActivity : VMBaseActivity<ActivityRssSourceBinding, RssSourceView
         }
     }
 
+    private fun checkSelectedSource() {
+        val sources = adapter.selection
+        if (sources.isEmpty()) {
+            toastOnUi(R.string.please_select_source)
+            return
+        }
+        checkSourceJob?.cancel()
+        waitDialog.setText(getString(R.string.rss_source_checking))
+        waitDialog.setOnCancelListener {
+            checkSourceJob?.cancel()
+        }
+        waitDialog.show()
+        checkSourceJob = viewModel.checkSelection(sources)
+            .onSuccess {
+                showCheckResult(it)
+            }.onError {
+                toastOnUi(it.localizedMessage ?: it.javaClass.simpleName)
+            }.onFinally {
+                waitDialog.dismiss()
+                checkSourceJob = null
+            }
+        checkSourceJob?.start()
+    }
+
+    private fun showCheckResult(results: List<RssSourceCheckResult>) {
+        val invalidResults = results.filterNot { it.success }
+        val message = buildString {
+            append(
+                getString(
+                    R.string.rss_source_check_result,
+                    results.size,
+                    results.size - invalidResults.size,
+                    invalidResults.size
+                )
+            )
+            if (invalidResults.isNotEmpty()) {
+                append("\n\n")
+                append(getString(R.string.rss_source_invalid_list))
+                append("\n")
+                invalidResults.take(20).forEachIndexed { index, result ->
+                    append(index + 1)
+                    append(". ")
+                    append(result.source.sourceName.ifBlank { result.source.sourceUrl })
+                    append(" - ")
+                    append(result.message)
+                    append("\n")
+                }
+                val omittedCount = invalidResults.size - 20
+                if (omittedCount > 0) {
+                    append(getString(R.string.more_items_omitted, omittedCount))
+                }
+            }
+        }.trimEnd()
+        alert(titleResource = R.string.check_select_source) {
+            setMessage(message)
+            if (invalidResults.isEmpty()) {
+                okButton()
+            } else {
+                positiveButton(R.string.delete_invalid_rss_source) {
+                    viewModel.del(*invalidResults.map { it.source }.toTypedArray())
+                }
+                cancelButton()
+            }
+        }
+    }
+
     private fun upGroupMenu() = groupMenu?.transaction { menu ->
         menu.removeGroup(R.id.source_group)
         groups.forEach {
@@ -347,6 +419,12 @@ class RssSourceActivity : VMBaseActivity<ActivityRssSourceBinding, RssSourceView
     override fun onPause() {
         adapter.upResumed(false)
         super.onPause()
+    }
+
+    override fun onDestroy() {
+        checkSourceJob?.cancel()
+        waitDialog.dismiss()
+        super.onDestroy()
     }
 
     override fun upCountView() {

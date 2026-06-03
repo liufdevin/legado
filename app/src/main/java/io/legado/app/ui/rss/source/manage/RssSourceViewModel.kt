@@ -2,20 +2,37 @@ package io.legado.app.ui.rss.source.manage
 
 import android.app.Application
 import android.text.TextUtils
+import io.legado.app.R
 import io.legado.app.base.BaseViewModel
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.RssSource
+import io.legado.app.exception.NoStackTraceException
 import io.legado.app.help.DefaultData
+import io.legado.app.help.http.addHeaders
+import io.legado.app.help.http.newCallResponse
+import io.legado.app.help.http.okHttpClient
 import io.legado.app.help.source.SourceHelp
+import io.legado.app.model.analyzeRule.AnalyzeUrl
 import io.legado.app.utils.FileUtils
 import io.legado.app.utils.GSON
+import io.legado.app.utils.NetworkUtils
+import io.legado.app.utils.isAbsUrl
 import io.legado.app.utils.normalizeFileName
 import io.legado.app.utils.splitNotBlank
 import io.legado.app.utils.stackTraceStr
 import io.legado.app.utils.toastOnUi
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
+import okhttp3.OkHttpClient
 import java.io.File
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 /**
  * 订阅源管理数据修改
@@ -121,6 +138,90 @@ class RssSourceViewModel(application: Application) : BaseViewModel(application) 
         }
     }
 
+    fun checkSelection(sources: List<RssSource>) = execute(start = CoroutineStart.LAZY) {
+        if (!NetworkUtils.isAvailable()) {
+            throw NoStackTraceException(context.getString(R.string.network_connection_unavailable))
+        }
+        val client = okHttpClient.newBuilder()
+            .connectTimeout(6, TimeUnit.SECONDS)
+            .readTimeout(6, TimeUnit.SECONDS)
+            .callTimeout(8, TimeUnit.SECONDS)
+            .build()
+        val semaphore = Semaphore(5)
+        coroutineScope {
+            sources.map { source ->
+                async {
+                    semaphore.withPermit {
+                        checkSourceUrl(client, source)
+                    }
+                }
+            }.awaitAll()
+        }
+    }
+
+    private suspend fun checkSourceUrl(
+        client: OkHttpClient,
+        source: RssSource
+    ): RssSourceCheckResult {
+        return runCatching {
+            val analyzeUrl = AnalyzeUrl(
+                source.sourceUrl,
+                source = source,
+                coroutineContext = currentCoroutineContext(),
+                hasLoginHeader = false
+            )
+            val url = analyzeUrl.url.trim()
+            if (!url.isAbsUrl()) {
+                return@runCatching RssSourceCheckResult(
+                    source = source,
+                    success = false,
+                    message = context.getString(R.string.invalid_url)
+                )
+            }
+            val headResult = requestUrl(client, url, analyzeUrl.headerMap, head = true)
+            if (headResult.success) {
+                headResult.toCheckResult(source)
+            } else {
+                requestUrl(client, url, analyzeUrl.headerMap, head = false).toCheckResult(source)
+            }
+        }.getOrElse {
+            RssSourceCheckResult(
+                source = source,
+                success = false,
+                message = it.localizedMessage ?: it.javaClass.simpleName
+            )
+        }
+    }
+
+    private suspend fun requestUrl(
+        client: OkHttpClient,
+        url: String,
+        headers: Map<String, String>,
+        head: Boolean
+    ): UrlCheckResult {
+        return runCatching {
+            client.newCallResponse {
+                url(url)
+                addHeaders(headers)
+                if (head) {
+                    head()
+                } else {
+                    header("Range", "bytes=0-0")
+                }
+            }.use {
+                UrlCheckResult(
+                    success = it.isSuccessful,
+                    message = "HTTP ${it.code}"
+                )
+            }
+        }.getOrElse {
+            UrlCheckResult(
+                success = false,
+                message = it.localizedMessage ?: it.javaClass.simpleName
+            )
+        }
+    }
+
     fun addGroup(group: String) {
         execute {
             val sources = appDb.rssSourceDao.noGroup
@@ -174,4 +275,19 @@ class RssSourceViewModel(application: Application) : BaseViewModel(application) 
         }
     }
 
+}
+
+data class RssSourceCheckResult(
+    val source: RssSource,
+    val success: Boolean,
+    val message: String
+)
+
+private data class UrlCheckResult(
+    val success: Boolean,
+    val message: String
+) {
+    fun toCheckResult(source: RssSource): RssSourceCheckResult {
+        return RssSourceCheckResult(source, success, message)
+    }
 }

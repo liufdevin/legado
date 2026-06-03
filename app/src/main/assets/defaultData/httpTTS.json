@@ -1,13 +1,13 @@
 [
   {
     "id": -100,
-    "name": "1.百度",
+    "name": "百度",
     "url": "http://tts.baidu.com/text2audio,{\n    \"method\": \"POST\",\n    \"body\": \"tex={{java.encodeURI(java.encodeURI(speakText))}}&spd={{(speakSpeed + 5) / 10 + 4}}&per=3&cuid=baidu_speech_demo&idx=1&cod=2&lan=zh&ctp=1&pdt=160&vol=5&aue=6&pit=5&_res_tag_=audio\"\n}",
     "contentType": "audio/wav"
   },
   {
     "id": -29,
-    "name": "2.阿里云语音",
+    "name": "阿里云语音",
     "url": "https://nls-gateway.cn-shanghai.aliyuncs.com/stream/v1/tts,{\"method\": \"POST\",\"body\": {\"appkey\":\"{{source.getLoginInfoMap().get('AppKey')}}\",\"text\":\"{{speakText}}\",\"format\":\"mp3\",\"volume\":100,\"speech_rate\":{{String((speakSpeed) * 20 - 400)}} }}",
     "contentType": "audio/mpeg",
     "loginUrl": "function login(){var loginInfo = source.getLoginInfoMap();\nvar accessKeyId = loginInfo.get('AccessKeyId');\nvar accessKeySecret = loginInfo.get('AccessKeySecret');\nvar timestamp = java.timeFormatUTC(new Date().getTime(), \"yyyy-MM-dd'T'HH:mm:ss'Z'\", 0);\nvar aly = new JavaImporter(Packages.javax.crypto.Mac, Packages.javax.crypto.spec.SecretKeySpec, Packages.javax.xml.bind.DatatypeConverter, Packages.java.net.URLEncoder, Packages.java.lang.String, Packages.android.util.Base64);\nwith (aly) {\n    function percentEncode(value) {\n        return URLEncoder.encode(value, \"UTF-8\").replace(\"+\", \"%20\")\n            .replace(\"*\", \"%2A\").replace(\"%7E\", \"~\")\n    }\n\n    function sign(stringToSign, accessKeySecret) {\n        var mac = Mac.getInstance('HmacSHA1');\n        mac.init(new SecretKeySpec(String(accessKeySecret + '&').getBytes(\"UTF-8\"), \"HmacSHA1\"));\n        var signData = mac.doFinal(String(stringToSign).getBytes(\"UTF-8\"));\n        var signBase64 = Base64.encodeToString(signData, Base64.NO_WRAP);\n        var signUrlEncode = percentEncode(signBase64);\n        return signUrlEncode;\n    }\n}\nvar query = 'AccessKeyId=' + accessKeyId + '&Action=CreateToken&Format=JSON&RegionId=cn-shanghai&SignatureMethod=HMAC-SHA1&SignatureNonce=' + java.randomUUID() + '&SignatureVersion=1.0&Timestamp=' + percentEncode(timestamp) + '&Version=2019-02-28';\nvar signStr = sign('GET&' + percentEncode('/') + '&' + percentEncode(query), accessKeySecret);\nvar queryStringWithSign = \"Signature=\" + signStr + \"&\" + query;\nvar body = java.ajax('http://nls-meta.cn-shanghai.aliyuncs.com/?' + queryStringWithSign)\nvar res = JSON.parse(body)\nif (res.Message) {\n    throw new Error(res.Message)\n}\nvar header = { \"X-NLS-Token\": res.Token.Id };\nsource.putLoginHeader(JSON.stringify(header))}",
@@ -40,5 +40,14 @@
     "loginUrl": "function login() {}\n\nfunction checkjk() {\n    let jk = result[\"api\"];\n    let fhd = apiM[jk];\n    java.toast(`\\n当前接口${fhd?\"✓支持\":\"X不支持\"}FHD发言人\\n正在测试延迟...`);\n    let url = apiurl(\"测试\", 10, jk);\n    let res = java.ajaxTestAll([url], 3000, true)[0];\n    let time = res.callTime();\n    if (time < 0) {\n        java.toast(java.log(`\\n接口：${jk}\\n无法访问 ${time}`));\n        return\n    }\n    java.toast(`\\n接口：${jk}\\n延迟时间为${time}`);\n}\n\nfunction clear() {\n    if (result[\"自动清除缓存\"] == \"🔳\") return;\n    java.clearTtsCache();\n}",
     "name": "🌈Next引擎-长按切换音色",
     "url": "@js:apiurl(speakText,speakSpeed);"
+  },
+  {
+    "id": -28,
+    "name": "火山引擎(WebSocket)",
+    "url": "wss://openspeech.bytedance.com/api/v3/tts/bidirection",
+    "contentType": "audio/mpeg",
+    "concurrentRate": "800",
+    "loginUi": "@js:\nvar defaultSpeaker = 'zh_female_meilinvyou_moon_bigtts';\nvar speakerOptions = [];\ntry { speakerOptions = JSON.parse(source.get('volcengineSpeakerOptions') || '[]'); } catch(e) { speakerOptions = []; }\nif (!speakerOptions || speakerOptions.length == 0) speakerOptions = [defaultSpeaker];\nvar currentSpeaker = (result && result['Speaker']) || defaultSpeaker;\nif (speakerOptions.indexOf(currentSpeaker) < 0) speakerOptions.unshift(currentSpeaker);\nJSON.stringify([\n  {\"name\":\"API Key\",\"type\":\"password\",\"viewName\":\"'合成API Key'\"},\n  {\"name\":\"Access Key ID\",\"type\":\"password\",\"viewName\":\"'OpenAPI AK'\"},\n  {\"name\":\"Secret Access Key\",\"type\":\"password\",\"viewName\":\"'OpenAPI SK'\"},\n  {\"name\":\"Resource ID\",\"type\":\"text\",\"viewName\":\"'资源ID'\",\"default\":\"seed-tts-2.0\"},\n  {\"name\":\"刷新公版音色列表\",\"type\":\"button\",\"viewName\":\"'用AK/SK刷新音色'\",\"action\":\"source.putLoginInfo(JSON.stringify(result)); java.refreshVolcengineSpeakers();\"},\n  {\"name\":\"Speaker\",\"type\":\"select\",\"viewName\":\"'音色'\",\"chars\":speakerOptions,\"default\":currentSpeaker},\n  {\"name\":\"Model\",\"type\":\"text\",\"viewName\":\"'模型'\"},\n  {\"name\":\"Format\",\"type\":\"select\",\"viewName\":\"'格式'\",\"chars\":[\"mp3\",\"wav\",\"ogg_opus\",\"pcm\"],\"default\":\"mp3\"},\n  {\"name\":\"Sample Rate\",\"type\":\"select\",\"viewName\":\"'采样率'\",\"chars\":[\"16000\",\"24000\",\"44100\",\"48000\"],\"default\":\"24000\"},\n  {\"name\":\"Speech Rate\",\"type\":\"text\",\"viewName\":\"'语速'\"},\n  {\"name\":\"Loudness Rate\",\"type\":\"text\",\"viewName\":\"'音量'\"},\n  {\"name\":\"Emotion\",\"type\":\"text\",\"viewName\":\"'情绪'\"},\n  {\"name\":\"Emotion Scale\",\"type\":\"text\",\"viewName\":\"'情绪强度'\"},\n  {\"name\":\"Audio Params Extra\",\"type\":\"text\",\"viewName\":\"'音频参数JSON'\"},\n  {\"name\":\"Additions Extra\",\"type\":\"text\",\"viewName\":\"'附加参数JSON'\"},\n  {\"name\":\"Raw Req Params\",\"type\":\"text\",\"viewName\":\"'完整请求JSON'\"},\n  {\"name\":\"Endpoint\",\"type\":\"text\",\"viewName\":\"'接口地址'\",\"default\":\"wss://openspeech.bytedance.com/api/v3/tts/bidirection\"}\n]);",
+    "loginUrl": "function login() {}"
   }
 ]

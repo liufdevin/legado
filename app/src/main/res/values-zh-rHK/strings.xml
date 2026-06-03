@@ -293,6 +293,13 @@
     <string name="padding_right">右邊距</string>
     <string name="check_book_source">校驗書源</string>
     <string name="check_select_source">校驗所選</string>
+    <string name="rss_source_checking">正在校驗所選訂閱源…</string>
+    <string name="rss_source_check_result">已校驗 %1$d 個訂閱源：%2$d 個可用，%3$d 個失效。</string>
+    <string name="rss_source_invalid_list">失效訂閱源：</string>
+    <string name="delete_invalid_rss_source">刪除失效訂閱源</string>
+    <string name="invalid_url">URL 無效</string>
+    <string name="please_select_source">請先選擇源</string>
+    <string name="more_items_omitted">…還有 %1$d 個未顯示</string>
     <string name="progress_show">%1$s      進度 %2$d/%3$d</string>
     <string name="tts_fix">請安裝並選擇中文 TTS!</string>
     <string name="tts_init_failed">TTS 初始化失敗!</string>
@@ -608,6 +615,7 @@
     <string name="refresh_cover">刷新封面</string>
     <string name="change_cover_source">封面換源</string>
     <string name="select_local_image">選擇本地圖片</string>
+    <string name="select_builtin_cover">選擇內置封面</string>
     <string name="book_type">類型: </string>
     <string name="to_backstage">後台</string>
     <string name="importing">正在導入</string>
