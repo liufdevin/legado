@@ -21,6 +21,7 @@ import io.legado.app.exception.NoStackTraceException
 import io.legado.app.help.AppWebDav
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.config.LocalConfig
+import io.legado.app.help.config.LocalWebDavConfig
 import io.legado.app.help.coroutine.Coroutine
 import io.legado.app.help.storage.Backup
 import io.legado.app.help.storage.BackupConfig
@@ -108,6 +109,7 @@ class BackupConfigFragment : PreferenceFragment(),
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         addPreferencesFromResource(R.xml.pref_config_backup)
+        LocalWebDavConfig.applyIfBlank()
         findPreference<EditTextPreference>(PreferKey.webDavPassword)?.let {
             it.setOnBindEditTextListener { editText ->
                 editText.inputType =

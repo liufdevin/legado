@@ -9,6 +9,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import io.legado.app.R
 import io.legado.app.constant.PreferKey
+import io.legado.app.help.AssetsImageHelp
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.http.addHeaders
 import io.legado.app.help.http.newCallResponse
@@ -36,6 +37,7 @@ import java.io.FileOutputStream
 class WelcomeConfigFragment : PreferenceFragment(),
     SharedPreferences.OnSharedPreferenceChangeListener {
 
+    private val builtInImage = "内置图片"
     private val requestWelcomeImage = 221
     private val requestWelcomeImageDark = 222
     private val selectImage = registerForActivityResult(HandleFileContract()) {
@@ -114,73 +116,51 @@ class WelcomeConfigFragment : PreferenceFragment(),
     @SuppressLint("PrivateResource")
     override fun onPreferenceTreeClick(preference: Preference): Boolean {
         when (preference.key) {
-            PreferKey.welcomeImage ->
-                if (getPrefString(preference.key).isNullOrEmpty()) {
-                    selectImage.launch {
-                        requestCode = requestWelcomeImage
-                        mode = HandleFileContract.IMAGE
-                    }
-                } else {
-                    context?.selector(
-                        items = arrayListOf(
-                            getString(R.string.delete),
-                            getString(R.string.select_image)
-                        )
-                    ) { _, i ->
-                        if (i == 0) {
-                            removePref(preference.key)
-//                            AppConfig.welcomeShowText = true
-//                            AppConfig.welcomeShowIcon = true
-//                            findPreference<SwitchPreference>(PreferKey.welcomeShowText)?.let {
-//                                it.isChecked = true
-//                            }
-//                            findPreference<SwitchPreference>(PreferKey.welcomeShowIcon)?.let {
-//                                it.isChecked = true
-//                            }
-                            BookCover.upDefaultCover()
-                        } else {
-                            selectImage.launch {
-                                requestCode = requestWelcomeImage
-                                mode = HandleFileContract.IMAGE
-                            }
-                        }
-                    }
-                }
-
-            PreferKey.welcomeImageDark ->
-                if (getPrefString(preference.key).isNullOrEmpty()) {
-                    selectImage.launch {
-                        requestCode = requestWelcomeImageDark
-                        mode = HandleFileContract.IMAGE
-                    }
-                } else {
-                    context?.selector(
-                        items = arrayListOf(
-                            getString(R.string.delete),
-                            getString(R.string.select_image)
-                        )
-                    ) { _, i ->
-                        if (i == 0) {
-                            removePref(preference.key)
-//                            AppConfig.welcomeShowTextDark = true
-//                            AppConfig.welcomeShowIconDark = true
-//                            findPreference<SwitchPreference>(PreferKey.welcomeShowTextDark)?.let {
-//                                it.isChecked = true
-//                            }
-//                            findPreference<SwitchPreference>(PreferKey.welcomeShowIconDark)?.let {
-//                                it.isChecked = true
-//                            }
-                            BookCover.upDefaultCover()
-                        } else {
-                            selectImage.launch {
-                                requestCode = requestWelcomeImageDark
-                                mode = HandleFileContract.IMAGE
-                            }
-                        }
-                    }
-                }
+            PreferKey.welcomeImage -> selectWelcomeAction(preference.key, requestWelcomeImage)
+            PreferKey.welcomeImageDark -> selectWelcomeAction(preference.key, requestWelcomeImageDark)
         }
         return super.onPreferenceTreeClick(preference)
+    }
+
+    private fun selectWelcomeAction(preferenceKey: String, requestCode: Int) {
+        val actions = arrayListOf<String>()
+        if (!getPrefString(preferenceKey).isNullOrEmpty()) {
+            actions.add(getString(R.string.delete))
+        }
+        if (AssetsImageHelp.hasImages(AssetsImageHelp.LAUNCHER_BG)) {
+            actions.add(builtInImage)
+        }
+        actions.add(getString(R.string.select_image))
+        context?.selector(actions) { _, action, _ ->
+            when (action) {
+                getString(R.string.delete) -> {
+                    removePref(preferenceKey)
+                    BookCover.upDefaultCover()
+                }
+
+                builtInImage -> selectAssetWelcomeImage(preferenceKey)
+
+                getString(R.string.select_image) -> {
+                    selectImage.launch {
+                        this.requestCode = requestCode
+                        mode = HandleFileContract.IMAGE
+                    }
+                }
+            }
+        }
+    }
+
+    private fun selectAssetWelcomeImage(preferenceKey: String) {
+        showAssetImageSelector(AssetsImageHelp.LAUNCHER_BG, builtInImage) { assetName ->
+            val file = AssetsImageHelp.copyToExternal(
+                AssetsImageHelp.LAUNCHER_BG,
+                assetName,
+                "covers"
+            )
+            putPrefString(preferenceKey, file.absolutePath)
+            upPreferenceSummary(preferenceKey, file.absolutePath)
+            toastOnUi("设定成功")
+        }
     }
 
     private fun upPreferenceSummary(preferenceKey: String, value: String?) {

@@ -33,6 +33,18 @@ android {
     }
 
     signingConfigs {
+        debug {
+            storeFile file('D:\\Android_studio2022demo\\keystore\\helpera523.jks')
+            storePassword 'android'
+            keyAlias 'platform'
+            keyPassword 'android'
+        }
+        release {
+            storeFile file('D:\\Android_studio2022demo\\keystore\\helpera523.jks')
+            storePassword 'android'
+            keyAlias 'platform'
+            keyPassword 'android'
+        }
         if (project.hasProperty("RELEASE_STORE_FILE")) {
             myConfig {
                 storeFile file(RELEASE_STORE_FILE)
@@ -57,6 +69,7 @@ android {
 
         buildConfigField "String", "Cronet_Version", "\"$CronetVersion\""
         buildConfigField "String", "Cronet_Main_Version", "\"$CronetMainVersion\""
+        manifestPlaceholders.put("app_name_s", "@string/app_name_s")
 
         javaCompileOptions {
             annotationProcessorOptions {

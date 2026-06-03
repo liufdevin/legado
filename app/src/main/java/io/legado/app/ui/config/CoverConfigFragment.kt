@@ -8,6 +8,7 @@ import android.view.View
 import androidx.preference.Preference
 import io.legado.app.R
 import io.legado.app.constant.PreferKey
+import io.legado.app.help.AssetsImageHelp
 import io.legado.app.lib.dialogs.selector
 import io.legado.app.lib.prefs.SwitchPreference
 import io.legado.app.lib.prefs.fragment.PreferenceFragment
@@ -32,6 +33,7 @@ import java.io.FileOutputStream
 class CoverConfigFragment : PreferenceFragment(),
     SharedPreferences.OnSharedPreferenceChangeListener {
 
+    private val builtInImage = "内置图片"
     private val requestCodeCover = 111
     private val requestCodeCoverDark = 112
     private val selectImage = registerForActivityResult(HandleFileContract()) {
@@ -100,57 +102,52 @@ class CoverConfigFragment : PreferenceFragment(),
     override fun onPreferenceTreeClick(preference: Preference): Boolean {
         when (preference.key) {
             "coverRule" -> showDialogFragment(CoverRuleConfigDialog())
-            PreferKey.defaultCover ->
-                if (getPrefString(preference.key).isNullOrEmpty()) {
-                    selectImage.launch {
-                        requestCode = requestCodeCover
-                        mode = HandleFileContract.IMAGE
-                    }
-                } else {
-                    context?.selector(
-                        items = arrayListOf(
-                            getString(R.string.delete),
-                            getString(R.string.select_image)
-                        )
-                    ) { _, i ->
-                        if (i == 0) {
-                            removePref(preference.key)
-                            BookCover.upDefaultCover()
-                        } else {
-                            selectImage.launch {
-                                requestCode = requestCodeCover
-                                mode = HandleFileContract.IMAGE
-                            }
-                        }
-                    }
-                }
-
-            PreferKey.defaultCoverDark ->
-                if (getPrefString(preference.key).isNullOrEmpty()) {
-                    selectImage.launch {
-                        requestCode = requestCodeCoverDark
-                        mode = HandleFileContract.IMAGE
-                    }
-                } else {
-                    context?.selector(
-                        items = arrayListOf(
-                            getString(R.string.delete),
-                            getString(R.string.select_image)
-                        )
-                    ) { _, i ->
-                        if (i == 0) {
-                            removePref(preference.key)
-                            BookCover.upDefaultCover()
-                        } else {
-                            selectImage.launch {
-                                requestCode = requestCodeCoverDark
-                                mode = HandleFileContract.IMAGE
-                            }
-                        }
-                    }
-                }
+            PreferKey.defaultCover -> selectCoverAction(preference.key, requestCodeCover)
+            PreferKey.defaultCoverDark -> selectCoverAction(preference.key, requestCodeCoverDark)
         }
         return super.onPreferenceTreeClick(preference)
+    }
+
+    private fun selectCoverAction(preferenceKey: String, requestCode: Int) {
+        val actions = arrayListOf<String>()
+        if (!getPrefString(preferenceKey).isNullOrEmpty()) {
+            actions.add(getString(R.string.delete))
+        }
+        if (AssetsImageHelp.hasImages(AssetsImageHelp.COVER_BG)) {
+            actions.add(builtInImage)
+        }
+        actions.add(getString(R.string.select_image))
+        context?.selector(actions) { _, action, _ ->
+            when (action) {
+                getString(R.string.delete) -> {
+                    removePref(preferenceKey)
+                    BookCover.upDefaultCover()
+                }
+
+                builtInImage -> selectAssetCover(preferenceKey)
+
+                getString(R.string.select_image) -> {
+                    selectImage.launch {
+                        this.requestCode = requestCode
+                        mode = HandleFileContract.IMAGE
+                    }
+                }
+            }
+        }
+    }
+
+    private fun selectAssetCover(preferenceKey: String) {
+        showAssetImageSelector(AssetsImageHelp.COVER_BG, builtInImage) { assetName ->
+            val file = AssetsImageHelp.copyToExternal(
+                AssetsImageHelp.COVER_BG,
+                assetName,
+                "covers"
+            )
+            putPrefString(preferenceKey, file.absolutePath)
+            upPreferenceSummary(preferenceKey, file.absolutePath)
+            BookCover.upDefaultCover()
+            toastOnUi("设定成功")
+        }
     }
 
     private fun upPreferenceSummary(preferenceKey: String, value: String?) {

@@ -20,6 +20,7 @@ import io.legado.app.constant.EventBus
 import io.legado.app.constant.PreferKey
 import io.legado.app.databinding.DialogEditTextBinding
 import io.legado.app.databinding.DialogImageBlurringBinding
+import io.legado.app.help.AssetsImageHelp
 import io.legado.app.help.LauncherIconHelp
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.config.ThemeConfig
@@ -61,6 +62,7 @@ class ThemeConfigFragment : PreferenceFragment(),
     SharedPreferences.OnSharedPreferenceChangeListener,
     MenuProvider {
 
+    private val builtInImage = "内置图片"
     private val requestCodeBgLight = 121
     private val requestCodeBgDark = 122
     private val selectImage = registerForActivityResult(HandleFileContract()) {
@@ -247,19 +249,24 @@ class ThemeConfigFragment : PreferenceFragment(),
         val bgKey = if (isNight) PreferKey.bgImageN else PreferKey.bgImage
         val blurringKey = if (isNight) PreferKey.bgImageNBlurring else PreferKey.bgImageBlurring
         val actions = arrayListOf(
-            getString(R.string.background_image_blurring),
-            getString(R.string.select_image)
+            getString(R.string.background_image_blurring)
         )
+        if (AssetsImageHelp.hasImages(AssetsImageHelp.APP_BG)) {
+            actions.add(builtInImage)
+        }
+        actions.add(getString(R.string.select_image))
         if (!getPrefString(bgKey).isNullOrEmpty()) {
             actions.add(getString(R.string.delete))
         }
-        context?.selector(items = actions) { _, i ->
-            when (i) {
-                0 -> alertImageBlurring(blurringKey) {
+        context?.selector(actions) { _, action, _ ->
+            when (action) {
+                getString(R.string.background_image_blurring) -> alertImageBlurring(blurringKey) {
                     upTheme(isNight)
                 }
 
-                1 -> {
+                builtInImage -> selectAssetBg(isNight, bgKey)
+
+                getString(R.string.select_image) -> {
                     if (isNight) {
                         selectImage.launch {
                             requestCode = requestCodeBgDark
@@ -273,11 +280,25 @@ class ThemeConfigFragment : PreferenceFragment(),
                     }
                 }
 
-                2 -> {
+                getString(R.string.delete) -> {
                     removePref(bgKey)
                     upTheme(isNight)
                 }
             }
+        }
+    }
+
+    private fun selectAssetBg(isNight: Boolean, preferenceKey: String) {
+        showAssetImageSelector(AssetsImageHelp.APP_BG, builtInImage) { assetName ->
+            val file = AssetsImageHelp.copyToExternal(
+                AssetsImageHelp.APP_BG,
+                assetName,
+                preferenceKey
+            )
+            putPrefString(preferenceKey, file.absolutePath)
+            upPreferenceSummary(preferenceKey, file.absolutePath)
+            upTheme(isNight)
+            toastOnUi("设定成功")
         }
     }
 

@@ -9,6 +9,7 @@ import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookProgress
 import io.legado.app.exception.NoStackTraceException
 import io.legado.app.help.config.AppConfig
+import io.legado.app.help.config.LocalWebDavConfig
 import io.legado.app.help.storage.Backup
 import io.legado.app.help.storage.Restore
 import io.legado.app.lib.webdav.Authorization
@@ -73,6 +74,7 @@ object AppWebDav {
 
     suspend fun upConfig() {
         kotlin.runCatching {
+            LocalWebDavConfig.applyIfBlank()
             authorization = null
             defaultBookWebDav = null
             val account = appCtx.getPrefString(PreferKey.webDavAccount)

@@ -23,6 +23,7 @@ import io.legado.app.constant.EventBus
 import io.legado.app.databinding.DialogEditTextBinding
 import io.legado.app.databinding.DialogReadBgTextBinding
 import io.legado.app.databinding.ItemBgImageBinding
+import io.legado.app.help.AssetsImageHelp
 import io.legado.app.help.DefaultData
 import io.legado.app.help.book.isImage
 import io.legado.app.help.config.ReadBookConfig
@@ -198,9 +199,7 @@ class BgTextConfigDialog : BaseDialogFragment(R.layout.dialog_read_bg_text) {
                 }
             }
         }
-        requireContext().assets.list("bg")?.let {
-            adapter.setItems(it.toList())
-        }
+        adapter.setItems(AssetsImageHelp.list(AssetsImageHelp.READ_BG))
     }
 
     @SuppressLint("InflateParams")
