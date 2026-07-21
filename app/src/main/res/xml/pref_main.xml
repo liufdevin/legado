@@ -19,6 +19,12 @@
         app:iconSpaceReserved="false" />
 
     <io.legado.app.lib.prefs.Preference
+        android:icon="@drawable/ic_download_line"
+        android:key="tomatoNovelDownload"
+        android:title="@string/tomato_novel_download"
+        app:iconSpaceReserved="false" />
+
+    <io.legado.app.lib.prefs.Preference
         android:icon="@drawable/ic_cfg_replace"
         android:key="replaceManage"
         android:summary="@string/replace_purify_desc"

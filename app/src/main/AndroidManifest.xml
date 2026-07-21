@@ -165,6 +165,13 @@
         <activity
             android:name=".ui.book.info.BookInfoActivity"
             android:launchMode="singleTop" />
+        <!-- 番茄小说 EPUB 下载 -->
+        <activity
+            android:name=".ui.tomato.TomatoDownloadActivity"
+            android:launchMode="singleTop" />
+        <activity
+            android:name=".ui.tomato.TomatoSearchActivity"
+            android:launchMode="singleTop" />
         <!-- 书籍信息编辑 -->
         <activity
             android:name=".ui.book.info.edit.BookInfoEditActivity"
@@ -513,6 +520,14 @@
             android:foregroundServiceType="mediaPlayback" />
         <service
             android:name=".service.DownloadService"
+            android:foregroundServiceType="dataSync" />
+        <service
+            android:name=".ui.tomato.TomatoDownloadService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+        <service
+            android:name=".ui.tomato.TomatoWebUiService"
+            android:exported="false"
             android:foregroundServiceType="dataSync" />
 
         <receiver

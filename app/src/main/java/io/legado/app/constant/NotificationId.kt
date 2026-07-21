@@ -14,6 +14,8 @@ object NotificationId {
     const val DownloadService = 106
     const val CheckSourceService = 107
     const val VideoPlayService = 108
+    const val TomatoDownloadService = 109
+    const val TomatoWebUiService = 110
     const val Download = 10000
     const val ExportBook = 201
 
